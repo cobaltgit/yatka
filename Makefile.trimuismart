@@ -1,0 +1,38 @@
+.PHONY: all clean zip
+
+BIN_BASE = /opt/trimuismart-toolchain/usr/bin/
+PROJECT = yatka
+ZIPNAME = $(PROJECT).zip
+SRC = src/main.c src/data_persistence.c src/video.c src/sound.c \
+	src/state_gameover.c src/state_settings.c src/randomizer.c \
+	src/state_mainmenu.c src/skin.c
+OBJ = $(SRC:.c=.o)
+DEP = $(SRC:.c=.d)
+CFLAGS = -Iinc -D_BITTBOY -Ofast -mcpu=cortex-a7 -ffunction-sections -fdata-sections -flto
+LDFLAGS = -Wl,--gc-sections,--as-needed -flto -s $(shell $(BIN_BASE)pkg-config --libs sdl SDL_image SDL_ttf SDL_mixer)
+CC = arm-buildroot-linux-gnueabihf-gcc
+
+all: $(PROJECT)
+
+zip: $(ZIPNAME)
+
+$(ZIPNAME): $(PROJECT) skins sfx music icon.png yatka.png README.md LICENSE.md
+	zip -r $(ZIPNAME) $^
+
+$(PROJECT): $(OBJ)
+	$(CC) -o $(PROJECT) $(OBJ) $(LDFLAGS)
+
+src/%.o: src/%.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+src/%.d: src/%.c
+	@set -e; \
+	rm -f $@; \
+	$(CC) -MM $(CFLAGS) $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,src/\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+
+clean:
+	rm -rf $(PROJECT) $(OBJ) $(DEP) src/*.d.* $(ZIPNAME)
+
+-include $(DEP)

@@ -8,7 +8,7 @@
 #define SCREEN_WIDTH		320
 #define SCREEN_HEIGHT		240
 // fps limit off
-#define FPS					6000.0
+#define FPS					60.0
 
 #if defined _BITTBOY
 #define SCREEN_BPP			16
